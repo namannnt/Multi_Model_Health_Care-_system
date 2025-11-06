@@ -80,26 +80,41 @@ def load_ecg_model():
     return model
 
 def preprocess_image(img):
-    # Convert uploaded file to bytes if needed
-    if hasattr(img, "read"):
-        file_bytes = np.asarray(bytearray(img.read()), dtype=np.uint8)
-        img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
-    elif isinstance(img, Image.Image):
-        # Convert PIL Image → NumPy array
-        img = np.array(img.convert("RGB"))
-    else:
-        raise ValueError("Unsupported image format")
+    import logging
+    logger = logging.getLogger("streamlit")
+    try:
+        # 1. Decode image safely (supports both BytesIO and PIL)
+        if hasattr(img, "read"):
+            file_bytes = np.asarray(bytearray(img.read()), dtype=np.uint8)
+            img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+        elif isinstance(img, Image.Image):
+            img = np.array(img.convert("RGB"))
+        else:
+            raise ValueError(f"Unsupported image type: {type(img)}")
 
-    # Resize to 224x224
-    img = cv2.resize(img, (224, 224))
-    img = img[:, :, ::-1]  # BGR → RGB
-    img = img.astype(np.float32) / 255.0  # Normalize to [0,1]
+        # 2. Check decoding
+        if img is None:
+            raise ValueError("cv2.imdecode returned None (invalid image)")
 
-    # Convert to tensor and normalize
-    tensor = torch.from_numpy(img.transpose((2, 0, 1)))  # HWC → CHW
-    tensor = transforms.Normalize([0.485, 0.456, 0.406],
-                                  [0.229, 0.224, 0.225])(tensor)
-    return tensor.unsqueeze(0)
+        # 3. Resize + convert color
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) if img.shape[-1] == 3 else img
+        img = cv2.resize(img, (224, 224), interpolation=cv2.INTER_LINEAR)
+
+        # 4. Convert to float tensor
+        img = img.astype(np.float32) / 255.0
+        tensor = torch.from_numpy(np.transpose(img, (2, 0, 1))).contiguous()
+
+        # 5. Normalize
+        tensor = transforms.Normalize([0.485, 0.456, 0.406],
+                                      [0.229, 0.224, 0.225])(tensor)
+        return tensor.unsqueeze(0)
+
+    except Exception as e:
+        logger.error(f"Image preprocessing failed: {e}")
+        st.error(f"Image preprocessing failed: {e}")
+        raise
+
+
 def generate_gradcam_image(model, image_tensor, target_layer):
     gradients, activations = [], []
 
