@@ -1,11 +1,9 @@
 streamlit
-torch==2.3.0+cpu
-torchvision==0.18.0+cpu
---extra-index-url https://download.pytorch.org/whl/cpu
-Pillow
-numpy
-plotly
-matplotlib
 pandas
+numpy
 scikit-learn
-opencv-python
+torch==2.5.1+cpu
+torchvision==0.20.1+cpu
+opencv-python-headless
+matplotlib
+Pillow
