@@ -2,8 +2,8 @@ streamlit
 pandas
 numpy
 scikit-learn
-torch==2.5.1+cpu
-torchvision==0.20.1+cpu
+torch==2.5.1
+torchvision==0.20.1
 opencv-python-headless
 matplotlib
 Pillow
