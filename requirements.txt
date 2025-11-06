@@ -7,3 +7,4 @@ torchvision==0.17.2
 opencv-python-headless
 matplotlib
 Pillow
+plotly
