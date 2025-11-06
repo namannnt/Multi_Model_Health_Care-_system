@@ -80,13 +80,23 @@ def load_ecg_model():
     return model
 
 def preprocess_image(img: Image.Image):
+    # Ensure the image is in RGB mode
+    if img.mode != "RGB":
+        img = img.convert("RGB")
+
+    # Defensive conversion from Streamlit file buffer to PIL.Image
+    if not isinstance(img, Image.Image):
+        img = Image.open(io.BytesIO(img)).convert("RGB")
+
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406],
                              [0.229, 0.224, 0.225])
     ])
-    return transform(img).unsqueeze(0)
+
+    tensor = transform(img).unsqueeze(0)
+    return tensor
 
 def generate_gradcam_image(model, image_tensor, target_layer):
     gradients, activations = [], []
