@@ -79,25 +79,27 @@ def load_ecg_model():
     model.eval()
     return model
 
-def preprocess_image(img: Image.Image):
-    # If it's a file-like object from Streamlit, open it as an RGB image
-    if not isinstance(img, Image.Image):
-        img = Image.open(io.BytesIO(img))
-    if img.mode != "RGB":
-        img = img.convert("RGB")
+def preprocess_image(img):
+    # Convert uploaded file to bytes if needed
+    if hasattr(img, "read"):
+        file_bytes = np.asarray(bytearray(img.read()), dtype=np.uint8)
+        img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+    elif isinstance(img, Image.Image):
+        # Convert PIL Image → NumPy array
+        img = np.array(img.convert("RGB"))
+    else:
+        raise ValueError("Unsupported image format")
 
-    # Convert to a clean RGB NumPy array (avoid weird modes)
-    img = np.array(img).astype(np.uint8)
-    img = Image.fromarray(img)
+    # Resize to 224x224
+    img = cv2.resize(img, (224, 224))
+    img = img[:, :, ::-1]  # BGR → RGB
+    img = img.astype(np.float32) / 255.0  # Normalize to [0,1]
 
-    transform = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406],
-                             [0.229, 0.224, 0.225])
-    ])
-    tensor = transform(img).unsqueeze(0)
-    return tensor
+    # Convert to tensor and normalize
+    tensor = torch.from_numpy(img.transpose((2, 0, 1)))  # HWC → CHW
+    tensor = transforms.Normalize([0.485, 0.456, 0.406],
+                                  [0.229, 0.224, 0.225])(tensor)
+    return tensor.unsqueeze(0)
 def generate_gradcam_image(model, image_tensor, target_layer):
     gradients, activations = [], []
 
