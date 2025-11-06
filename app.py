@@ -17,11 +17,19 @@ from typing import Tuple
 # ----------------------------------------
 # USER-CONFIGURABLE PATHS
 # ----------------------------------------
-BASE_PATH = r"E:\all three saved models"
+# ----------------------------------------
+# USER-CONFIGURABLE PATHS (Streamlit-safe)
+# ----------------------------------------
+import os
+BASE_DIR = os.path.dirname(os.path.abspath(_file_))
+BASE_PATH = os.path.join(BASE_DIR, "all three saved models")
+
 RETINA_WEIGHTS = os.path.join(BASE_PATH, "best_model.pth")
 PNEUMONIA_WEIGHTS = os.path.join(BASE_PATH, "densenet121_chest.pth")
 ECG_WEIGHTS = os.path.join(BASE_PATH, "ecg_best_model_v4.pth")
-ECG_MODEL_PY = r"E:\Medical_DL_App\src\03_train_model.py"
+
+# If your ECG model definition file exists in the repo:
+ECG_MODEL_PY = os.path.join(BASE_DIR, "src", "03_train_model.py")
 
 # ----------------------------------------
 # CLASS LABELS
